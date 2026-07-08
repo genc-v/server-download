@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# runtime state & user data (recreated by the server/app)
+downloads/
+state.json
+.gofile-guest-token.json
+*.log
+
+# electron build output
+app/out/
+app/dist/
+
+# OS / editor noise
+.DS_Store

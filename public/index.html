@@ -88,6 +88,7 @@
   .status.retrying, .status.extracting { background: #4d4426; color: #e6cf8f; }
   .status.completed, .status.installed { background: #1f4633; color: #8fd6ae; }
   .status.error, .status.cancelled { background: #4d2626; color: #f0a0a0; }
+  .status.paused { background: #3a3d46; color: #c8cede; }
   .error-text { color: var(--err); font-size: 12px; margin-top: 8px; word-break: break-word; }
   .actions button {
     background: transparent;
@@ -277,6 +278,11 @@ function render(items) {
       );
       if (d.bytesPerSecond) metaParts.push(formatBytes(d.bytesPerSecond) + "/s");
       if (d.totalBytes) metaParts.push(percent.toFixed(1) + "%");
+    } else if (d.status === "paused") {
+      metaParts.push(
+        formatBytes(d.downloadedBytes) +
+        (d.totalBytes ? " / " + formatBytes(d.totalBytes) : "")
+      );
     } else if (d.status === "completed") {
       metaParts.push(formatBytes(d.totalBytes || d.downloadedBytes));
     } else if (d.status === "extracting") {
@@ -291,7 +297,13 @@ function render(items) {
 
     let action;
     if (active) {
-      action = '<button onclick="cancelDownload(\'' + d.id + '\')">Cancel</button>';
+      action =
+        '<button onclick="pauseDownload(\'' + d.id + '\')">Pause</button> ' +
+        '<button onclick="cancelDownload(\'' + d.id + '\')">Cancel</button>';
+    } else if (d.status === "paused") {
+      action =
+        '<button onclick="resumeDownload(\'' + d.id + '\')">Resume</button> ' +
+        '<button onclick="cancelDownload(\'' + d.id + '\')">Cancel</button>';
     } else if (d.status === "extracting") {
       action = '';
     } else if (d.status === "error" || d.status === "cancelled") {
@@ -325,6 +337,16 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+async function pauseDownload(id) {
+  await fetch("/api/downloads/" + id + "/pause", { method: "POST" });
+  refresh();
+}
+
+async function resumeDownload(id) {
+  await fetch("/api/downloads/" + id + "/resume", { method: "POST" });
+  refresh();
 }
 
 async function cancelDownload(id) {

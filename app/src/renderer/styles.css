@@ -1,0 +1,138 @@
+:root {
+  color-scheme: dark;
+  --bg: #16171c;
+  --panel: #1b1d23;
+  --card: #1f2128;
+  --border: #32343d;
+  --text: #e6e6e6;
+  --muted: #9a9ba3;
+  --accent: #7a6cff;
+  --ok: #4caf7d;
+  --err: #e05d5d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  display: flex;
+  height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ------------------------------- nav ------------------------------- */
+#nav {
+  flex: 0 0 170px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#nav h1 { font-size: 15px; line-height: 1.3; margin: 0 6px 14px; }
+#nav button {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+#nav button:hover { color: var(--text); }
+#nav button.active { background: var(--card); color: var(--text); }
+#nav-status { margin-top: auto; font-size: 11px; color: var(--muted); padding: 0 6px; }
+
+/* ------------------------------ layout ----------------------------- */
+main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+section { max-width: 860px; }
+h2 { font-size: 16px; margin: 26px 0 12px; }
+h2:first-child { margin-top: 0; }
+.empty { color: var(--muted); font-size: 14px; padding: 14px 0; }
+.meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.error-text { color: var(--err); font-size: 12px; min-height: 16px; margin: 6px 0; word-break: break-word; }
+
+/* ------------------------------ inputs ----------------------------- */
+form { display: flex; gap: 8px; }
+input[type="text"] {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+}
+input[type="text"]:focus { border-color: var(--accent); }
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: default; }
+button:focus, input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#gamepad-status { font-size: 11px; color: var(--ok); padding: 0 6px; margin-top: auto; }
+#gamepad-status + #nav-status { margin-top: 6px; }
+.field { display: block; margin-bottom: 16px; }
+.field > span:first-child { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.dir-row { display: flex; gap: 8px; }
+.dir-row input { flex: 1; }
+
+/* ------------------------------ cards ------------------------------ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grow { min-width: 0; flex: 1; }
+.actions { display: flex; gap: 6px; }
+.actions button, .card .ghost-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.actions button:hover, .card .ghost-btn:hover { color: var(--text); border-color: var(--muted); }
+.card .primary-btn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.card .primary-btn:hover { background: var(--accent); color: #fff; }
+
+/* ---------------------------- progress ----------------------------- */
+.bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.bar > div {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.5s linear;
+}
+.bar.done > div { background: var(--ok); }
+.bar.indeterminate > div { width: 30%; animation: slide 1.2s ease-in-out infinite alternate; }
+@keyframes slide { from { margin-left: 0; } to { margin-left: 70%; } }
+
+.status { font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.status.downloading, .status.resolving, .status.queued, .status.checking { background: #33306b; color: #b7b0ff; }
+.status.retrying, .status.extracting { background: #4d4426; color: #e6cf8f; }
+.status.completed, .status.installed { background: #1f4633; color: #8fd6ae; }
+.status.error, .status.cancelled { background: #4d2626; color: #f0a0a0; }
+.status.paused { background: #3a3d46; color: #c8cede; }

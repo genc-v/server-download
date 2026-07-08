@@ -28,7 +28,7 @@ const gofile = {
   wtScriptUrl: "https://gofile.io/dist/js/wt.obf.js",
   alternateCdnBaseUrl: "https://gofilecdn.eu.cc",
   pageSize: 1000,
-  tokenCachePath: path.join(__dirname, ".gofile-guest-token.json"),
+  tokenCachePath: path.join(__dirname, "..", "..", ".gofile-guest-token.json"),
   token: undefined,
   wtSecret: undefined,
 

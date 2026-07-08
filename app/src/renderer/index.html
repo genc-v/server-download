@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'" />
+<title>Server Downloader</title>
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<nav id="nav">
+  <h1>Server<br>Downloader</h1>
+  <button data-page="search" class="active">Search</button>
+  <button data-page="downloads">Downloads</button>
+  <button data-page="settings">Settings</button>
+  <div id="gamepad-status"></div>
+  <div id="nav-status"></div>
+</nav>
+
+<main>
+  <section id="page-search">
+    <h2>Search the source</h2>
+    <form id="search-form">
+      <input type="text" id="search-input" placeholder="Search…" autocomplete="off" autofocus />
+      <button type="submit" id="search-btn">Search</button>
+    </form>
+    <div id="search-error" class="error-text"></div>
+    <div id="search-results"></div>
+  </section>
+
+  <section id="page-downloads" hidden>
+    <h2>On the server</h2>
+    <div id="server-downloads" class="cards"><div class="empty">Nothing yet</div></div>
+
+    <h2>Available to download</h2>
+    <div id="library" class="cards"><div class="empty">Nothing finished on the server yet</div></div>
+
+    <h2>On this machine</h2>
+    <div id="local-transfers" class="cards"><div class="empty">No local downloads yet</div></div>
+  </section>
+
+  <section id="page-settings" hidden>
+    <h2>Settings</h2>
+
+    <label class="field">
+      <span>Server URL</span>
+      <input type="text" id="setting-server-url" placeholder="http://192.168.1.10:3939" />
+    </label>
+
+    <label class="field">
+      <span>Download folder</span>
+      <span class="dir-row">
+        <input type="text" id="setting-download-dir" readonly placeholder="Not set" />
+        <button id="choose-dir-btn">Choose…</button>
+      </span>
+    </label>
+
+    <div id="disk-free" class="meta"></div>
+    <div id="settings-status" class="meta"></div>
+  </section>
+</main>
+
+<script src="./js/format.js"></script>
+<script src="./js/input/focus-nav.js"></script>
+<script src="./js/pages/search.js"></script>
+<script src="./js/pages/downloads.js"></script>
+<script src="./js/pages/settings.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/input/keyboard.js"></script>
+<script src="./js/input/gamepad.js"></script>
+</body>
+</html>

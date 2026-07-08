@@ -1,12 +1,23 @@
 {
-  "name": "name",
+  "name": "local-test",
   "downloads": [
     {
-      "title": "file to download",
-      "uploadDate": "time",
-      "fileSize": "X GB",
-      "uris": ["https://gofile.io/d/123"]
+      "title": "middle click",
+      "uploadDate": "123",
+      "fileSize": "2238.3 kb",
+      "uris": ["https://gofile.io/d/nL0Xrj"]
     },
-    {}
+    {
+      "title": "test file 100MB",
+      "uploadDate": "2026-07-08",
+      "fileSize": "100 MB",
+      "uris": ["https://ash-speed.hetzner.com/100MB.bin"]
+    },
+    {
+      "title": "test file 1GB",
+      "uploadDate": "2026-07-08",
+      "fileSize": "1 GB",
+      "uris": ["https://ash-speed.hetzner.com/1GB.bin"]
+    }
   ]
 }
