@@ -1,0 +1,13 @@
+{
+  "name": "server-downloader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Paste a hoster link, download it on this machine, watch progress in the browser.",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

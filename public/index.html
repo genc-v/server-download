@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Server Downloader</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #16171c;
+    --card: #1f2128;
+    --border: #32343d;
+    --text: #e6e6e6;
+    --muted: #9a9ba3;
+    --accent: #7a6cff;
+    --ok: #4caf7d;
+    --err: #e05d5d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  main { width: 100%; max-width: 720px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  form { display: flex; gap: 8px; margin-bottom: 8px; }
+  input[type="text"] {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  #password { flex: 0 0 160px; }
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #form-error { color: var(--err); font-size: 13px; min-height: 18px; margin-bottom: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .bar > div {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.5s linear;
+  }
+  .bar.done > div { background: var(--ok); }
+  .bar.indeterminate > div {
+    width: 30%;
+    animation: slide 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes slide { from { margin-left: 0; } to { margin-left: 70%; } }
+  .status { font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .status.downloading, .status.resolving, .status.queued { background: #33306b; color: #b7b0ff; }
+  .status.retrying, .status.extracting { background: #4d4426; color: #e6cf8f; }
+  .status.completed, .status.installed { background: #1f4633; color: #8fd6ae; }
+  .status.error, .status.cancelled { background: #4d2626; color: #f0a0a0; }
+  .error-text { color: var(--err); font-size: 12px; margin-top: 8px; word-break: break-word; }
+  .actions button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .actions button:hover { color: var(--text); border-color: var(--muted); }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 32px 0; }
+  #search-results { margin-bottom: 20px; }
+  #search-results .card { padding: 10px 16px; }
+  #search-results .none { color: var(--muted); font-size: 13px; padding: 4px 2px 0; }
+  #search-results .card button {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+  #search-results .card button:hover { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Server Downloader</h1>
+  <div class="sub">Paste a Gofile, Datanodes, VikingFile, 1fichier or direct link — it downloads on this machine.</div>
+
+  <form id="search-form">
+    <input type="text" id="search" placeholder="Search the source…" autocomplete="off" autofocus />
+    <button type="submit" id="search-btn">Search</button>
+  </form>
+  <div id="search-results"></div>
+
+  <form id="add-form">
+    <input type="text" id="url" placeholder="https://gofile.io/d/..." autocomplete="off" />
+    <input type="text" id="password" placeholder="Password (optional)" autocomplete="off" />
+    <button type="submit" id="add-btn">Download</button>
+  </form>
+  <div id="form-error"></div>
+
+  <div id="list"><div class="empty">No downloads yet</div></div>
+</main>
+
+<script>
+const searchForm = document.getElementById("search-form");
+const searchInput = document.getElementById("search");
+const searchBtn = document.getElementById("search-btn");
+const searchResults = document.getElementById("search-results");
+let lastResults = [];
+
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const query = searchInput.value.trim();
+  if (!query) {
+    searchResults.innerHTML = "";
+    return;
+  }
+
+  searchBtn.disabled = true;
+  try {
+    const response = await fetch("/api/search?q=" + encodeURIComponent(query));
+    const data = await response.json();
+    if (!response.ok) {
+      searchResults.innerHTML = '<div class="none">' + escapeHtml(data.error || "Search failed") + '</div>';
+      return;
+    }
+    lastResults = data;
+    renderSearchResults(data);
+  } catch {
+    searchResults.innerHTML = '<div class="none">Server unreachable</div>';
+  } finally {
+    searchBtn.disabled = false;
+  }
+});
+
+function renderSearchResults(items) {
+  if (!items.length) {
+    searchResults.innerHTML = '<div class="none">No matches in the source</div>';
+    return;
+  }
+  searchResults.innerHTML = items.map((item, index) => {
+    const metaParts = [];
+    if (item.fileSize) metaParts.push(item.fileSize);
+    if (item.uploadDate) metaParts.push(item.uploadDate);
+    if (item.source) metaParts.push(item.source);
+    return (
+      '<div class="card">' +
+        '<div class="row">' +
+          '<div style="min-width:0">' +
+            '<div class="name">' + escapeHtml(item.title) + '</div>' +
+            '<div class="meta">' + escapeHtml(metaParts.join(" · ")) + '</div>' +
+          '</div>' +
+          '<button onclick="downloadResult(' + index + ', this)">Download</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join("");
+}
+
+async function downloadResult(index, button) {
+  const item = lastResults[index];
+  if (!item) return;
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/downloads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uris: item.uris }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      button.disabled = false;
+      formError.textContent = data.error || "Failed to start download";
+      return;
+    }
+    button.textContent = "Queued";
+    await refresh();
+  } catch {
+    button.disabled = false;
+    formError.textContent = "Server unreachable";
+  }
+}
+
+const form = document.getElementById("add-form");
+const urlInput = document.getElementById("url");
+const passwordInput = document.getElementById("password");
+const addBtn = document.getElementById("add-btn");
+const formError = document.getElementById("form-error");
+const list = document.getElementById("list");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  formError.textContent = "";
+  const url = urlInput.value.trim();
+  if (!url) return;
+
+  addBtn.disabled = true;
+  try {
+    const response = await fetch("/api/downloads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, password: passwordInput.value }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      formError.textContent = data.error || "Failed to start download";
+      return;
+    }
+    urlInput.value = "";
+    passwordInput.value = "";
+    await refresh();
+  } catch (error) {
+    formError.textContent = "Server unreachable";
+  } finally {
+    addBtn.disabled = false;
+  }
+});
+
+function formatBytes(bytes) {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log2(bytes) / 10));
+  return (bytes / 2 ** (10 * i)).toFixed(i === 0 ? 0 : 1) + " " + units[i];
+}
+
+function render(items) {
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">No downloads yet</div>';
+    return;
+  }
+
+  list.innerHTML = items.map((d) => {
+    const active = ["queued", "resolving", "downloading", "retrying"].includes(d.status);
+    const done = d.status === "completed" || d.status === "installed";
+    const percent = d.totalBytes
+      ? Math.min(100, (d.downloadedBytes / d.totalBytes) * 100)
+      : done ? 100 : 0;
+    const indeterminate =
+      d.status === "extracting" || (active && !d.totalBytes && d.status !== "queued");
+
+    const metaParts = [d.hoster];
+    if (d.status === "downloading") {
+      metaParts.push(
+        formatBytes(d.downloadedBytes) +
+        (d.totalBytes ? " / " + formatBytes(d.totalBytes) : "")
+      );
+      if (d.bytesPerSecond) metaParts.push(formatBytes(d.bytesPerSecond) + "/s");
+      if (d.totalBytes) metaParts.push(percent.toFixed(1) + "%");
+    } else if (d.status === "completed") {
+      metaParts.push(formatBytes(d.totalBytes || d.downloadedBytes));
+    } else if (d.status === "extracting") {
+      metaParts.push("unpacking archive…");
+    } else if (d.status === "installed") {
+      metaParts.push(formatBytes(d.totalBytes || d.downloadedBytes));
+      metaParts.push("fully installed");
+    }
+    if (d.status === "retrying" || (active && d.attempts > 1)) {
+      metaParts.push("attempt " + d.attempts + "/" + d.maxAttempts);
+    }
+
+    let action;
+    if (active) {
+      action = '<button onclick="cancelDownload(\'' + d.id + '\')">Cancel</button>';
+    } else if (d.status === "extracting") {
+      action = '';
+    } else if (d.status === "error" || d.status === "cancelled") {
+      action =
+        '<button onclick="retryDownload(\'' + d.id + '\')">Retry</button> ' +
+        '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
+    } else {
+      action = '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
+    }
+
+    return (
+      '<div class="card">' +
+        '<div class="row">' +
+          '<div style="min-width:0">' +
+            '<div class="name">' + escapeHtml(d.filename || d.uri) + '</div>' +
+            '<div class="meta">' + metaParts.join(" · ") + '</div>' +
+          '</div>' +
+          '<span class="status ' + d.status + '">' + d.status + '</span>' +
+          '<span class="actions">' + action + '</span>' +
+        '</div>' +
+        '<div class="bar' + (done ? " done" : "") + (indeterminate ? " indeterminate" : "") + '">' +
+          '<div style="width:' + percent + '%"></div>' +
+        '</div>' +
+        (d.error ? '<div class="error-text">' + escapeHtml(d.error) + '</div>' : '') +
+      '</div>'
+    );
+  }).join("");
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function cancelDownload(id) {
+  await fetch("/api/downloads/" + id + "/cancel", { method: "POST" });
+  refresh();
+}
+
+async function retryDownload(id) {
+  await fetch("/api/downloads/" + id + "/retry", { method: "POST" });
+  refresh();
+}
+
+async function removeDownload(id) {
+  await fetch("/api/downloads/" + id, { method: "DELETE" });
+  refresh();
+}
+
+async function refresh() {
+  try {
+    const response = await fetch("/api/downloads");
+    render(await response.json());
+  } catch {
+    /* server temporarily unreachable; keep last render */
+  }
+}
+
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

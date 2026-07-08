@@ -1,0 +1,12 @@
+{
+  "name": "name",
+  "downloads": [
+    {
+      "title": "file to download",
+      "uploadDate": "time",
+      "fileSize": "X GB",
+      "uris": ["https://gofile.io/d/123"]
+    },
+    {}
+  ]
+}

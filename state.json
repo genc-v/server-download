@@ -1,0 +1,28 @@
+[
+  {
+    "id": "3ba9ab96-d481-462f-9799-cdd918c14576",
+    "uri": "https://gofile.io/d/Ks72fv",
+    "hoster": "gofile",
+    "filename": "Vampire-Survivors-SteamRIP.com.rar",
+    "filePath": null,
+    "status": "cancelled",
+    "totalBytes": 1259756463,
+    "downloadedBytes": 0,
+    "attempts": 1,
+    "error": null,
+    "createdAt": 1783444549883
+  },
+  {
+    "id": "cd13e75c-6819-4701-ad09-0ae83b6f0a1a",
+    "uri": "https://gofile.io/d/v7DjgI",
+    "hoster": "gofile",
+    "filename": "Batman-Arkham-VR-SteamRIP.com.rar",
+    "filePath": "/Users/gencvallhiu/Documents/random/server-downloader/downloads/Batman-Arkham-VR-SteamRIP.com",
+    "status": "installed",
+    "totalBytes": 8525983024,
+    "downloadedBytes": 8525983024,
+    "attempts": 1,
+    "error": null,
+    "createdAt": 1783445268051
+  }
+]
