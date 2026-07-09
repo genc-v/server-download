@@ -1,6 +1,5 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-/** Unwrap the { ok, data | error } envelope from main. */
 async function invoke(channel, ...args) {
   const result = await ipcRenderer.invoke(channel, ...args);
   if (!result.ok) throw new Error(result.error);
@@ -23,10 +22,20 @@ contextBridge.exposeInMainWorld("api", {
   },
   local: {
     list: () => invoke("local:list"),
-    start: (libraryItemId) => invoke("local:start", libraryItemId),
+    start: ({ id, coverUrl }) => invoke("local:start", { id, coverUrl }),
     pause: (id) => invoke("local:pause", id),
     resume: (id) => invoke("local:resume", id),
     cancel: (id) => invoke("local:cancel", id),
     remove: (id) => invoke("local:remove", id),
+  },
+  rawg: {
+    list: (params) => invoke("rawg:list", params),
+    game: (idOrSlug) => invoke("rawg:game", idOrSlug),
+    screenshots: (idOrSlug) => invoke("rawg:screenshots", idOrSlug),
+    search: (query) => invoke("rawg:search", query),
+  },
+  meta: {
+    set: (name, coverUrl) => invoke("meta:set", { name, coverUrl }),
+    get: (name) => invoke("meta:get", name),
   },
 });

@@ -4,6 +4,7 @@ const { app, BrowserWindow } = require("electron");
 const { createSettingsStore } = require("./settings-store");
 const { createServerClient } = require("./server-client");
 const { createTransferManager } = require("./transfer-manager");
+const { createCache } = require("./cache");
 const { registerIpc } = require("./ipc");
 
 function createWindow() {
@@ -28,6 +29,7 @@ app.whenReady().then(() => {
   const settings = createSettingsStore(path.join(userData, "settings.json"), {
     serverUrl: "http://localhost:3939",
     downloadDir: "",
+    rawgApiKey: "",
   });
   const serverClient = createServerClient(() => settings.get().serverUrl);
   const transfers = createTransferManager({
@@ -35,7 +37,9 @@ app.whenReady().then(() => {
     serverClient,
   });
 
-  registerIpc({ settings, serverClient, transfers });
+  const cache = createCache(path.join(userData, "rawg-cache.json"));
+
+  registerIpc({ settings, serverClient, transfers, cache });
   transfers.restore();
   createWindow();
 

@@ -31,6 +31,7 @@ function createTransferManager({ stateFile, serverClient }) {
         id: job.id,
         serverId: job.serverId,
         name: job.name,
+        coverUrl: job.coverUrl,
         destDir: job.destDir,
         files: job.files,
         status: job.status,
@@ -49,6 +50,7 @@ function createTransferManager({ stateFile, serverClient }) {
       id: job.id,
       serverId: job.serverId,
       name: job.name,
+      coverUrl: job.coverUrl,
       destDir: job.destDir,
       status: job.status,
       totalBytes: job.totalBytes,
@@ -246,7 +248,7 @@ function createTransferManager({ stateFile, serverClient }) {
     },
 
     /** Start fetching a server library item into destDir. */
-    start(libraryItem, destDir) {
+    start(libraryItem, destDir, coverUrl) {
       const existing = [...jobs.values()].find(
         (job) =>
           job.serverId === libraryItem.id &&
@@ -258,6 +260,7 @@ function createTransferManager({ stateFile, serverClient }) {
         id: crypto.randomUUID(),
         serverId: libraryItem.id,
         name: libraryItem.name,
+        coverUrl: coverUrl || null,
         destDir,
         files: libraryItem.files,
         status: "queued",

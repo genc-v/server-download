@@ -7,7 +7,9 @@
  */
 App.focus = (() => {
   function focusables() {
-    return [...document.querySelectorAll("#nav button, main button, main input")].filter(
+    return [...document.querySelectorAll(
+      "#topbar button, #topbar input, #sidebar button, #main button, #main input"
+    )].filter(
       (el) =>
         !el.disabled &&
         !el.closest("[hidden]") &&
@@ -49,8 +51,8 @@ App.focus = (() => {
   }
 
   function focusFirst() {
-    const section = document.querySelector("main > section:not([hidden])");
-    const target = section?.querySelector("button:not(:disabled), input") ?? focusables()[0];
+    const view = document.querySelector("#main > div:not([hidden])");
+    const target = view?.querySelector("button:not(:disabled), input") ?? focusables()[0];
     target?.focus();
     return target ?? null;
   }
