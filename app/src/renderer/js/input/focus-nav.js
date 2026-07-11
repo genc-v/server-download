@@ -8,7 +8,7 @@
 App.focus = (() => {
   function focusables() {
     return [...document.querySelectorAll(
-      "#topbar button, #topbar input, #sidebar button, #main button, #main input"
+      "#topbar button, #topbar input, #tab-bar button, #main button, #main input"
     )].filter(
       (el) =>
         !el.disabled &&

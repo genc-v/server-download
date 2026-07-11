@@ -8,10 +8,9 @@
 </head>
 <body>
 
-<!-- ── Top bar ─────────────────────────────────────────────── -->
 <header id="topbar">
   <button id="back-btn" class="topbar-icon-btn" title="Back" disabled>
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
@@ -22,73 +21,67 @@
 
   <div id="search-wrap">
     <span class="search-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </span>
-    <input type="search" id="search-input" placeholder="Search for games, genres, publishers…"
+    <input type="search" id="search-input" placeholder="Search for games to download…"
            autocomplete="off" spellcheck="false" />
     <button id="search-clear" class="search-clear" hidden aria-label="Clear search">✕</button>
   </div>
 
   <button id="settings-btn" class="topbar-icon-btn" title="Settings">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   </button>
 </header>
 
-<!-- ── Body row ─────────────────────────────────────────────── -->
+<nav id="tab-bar">
+  <button class="tab-btn active" data-tab="home" id="tab-home">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    Library
+  </button>
+  <button class="tab-btn" data-tab="downloads" id="tab-downloads">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Downloads
+    <span id="downloads-badge" class="tab-badge" hidden></span>
+  </button>
+</nav>
+
 <div id="content-row">
-
-  <!-- Left sidebar -->
-  <aside id="sidebar">
-    <div class="sidebar-section-hd">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-      </svg>
-      Your Library
-    </div>
-    <div id="sidebar-list">
-      <div class="sidebar-empty">Nothing downloaded yet.<br>Find a game and queue it.</div>
-    </div>
-  </aside>
-
-  <!-- Main content views -->
   <main id="main">
     <div id="view-home"></div>
-    <div id="view-browse" hidden></div>
     <div id="view-search" hidden></div>
-    <div id="view-game" hidden></div>
+    <div id="view-downloads" hidden></div>
     <div id="view-settings" hidden></div>
   </main>
-
 </div>
 
-<!-- ── Fixed bottom download bar ───────────────────────────── -->
-<div id="download-bar" hidden>
-  <div id="dl-bar-cover" class="dl-bar-cover"></div>
-  <div class="dl-bar-body">
-    <div class="dl-bar-row1">
-      <span id="dl-bar-name" class="dl-bar-name"></span>
-      <span id="dl-bar-pct" class="dl-bar-pct"></span>
-    </div>
-    <div id="dl-bar-meta" class="dl-bar-meta"></div>
-    <div class="dl-bar-track">
-      <div id="dl-bar-fill" class="dl-bar-fill"></div>
-    </div>
+<div id="hint-bar">
+  <div class="hints">
+    <span class="hint"><span class="hint-key">A</span> Select</span>
+    <span class="hint"><span class="hint-key">B</span> Back</span>
+    <span class="hint"><span class="hint-key">LB</span><span class="hint-key">RB</span> Switch tab</span>
+    <span class="hint"><span class="hint-key">/ </span> Search</span>
   </div>
-  <button id="dl-bar-goto" class="dl-bar-goto" title="View in library">↑ Library</button>
+  <span id="gamepad-status"></span>
 </div>
 
 <script src="./js/format.js"></script>
 <script src="./js/input/focus-nav.js"></script>
 <script src="./js/pages/home.js"></script>
-<script src="./js/pages/game.js"></script>
 <script src="./js/pages/search-view.js"></script>
+<script src="./js/pages/downloads.js"></script>
 <script src="./js/pages/settings.js"></script>
-<script src="./js/sidebar.js"></script>
 <script src="./js/app.js"></script>
 <script src="./js/input/keyboard.js"></script>
 <script src="./js/input/gamepad.js"></script>

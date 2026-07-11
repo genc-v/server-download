@@ -5,6 +5,7 @@ const path = require("node:path");
 const { pipeline } = require("node:stream/promises");
 const { Readable, Transform } = require("node:stream");
 const { freeBytes } = require("./disk");
+const { extractAll } = require("./extract");
 
 const ACTIVE_STATUSES = ["queued", "checking", "downloading", "retrying"];
 const MAX_CONSECUTIVE_FAILURES = 10;
@@ -60,6 +61,8 @@ function createTransferManager({ stateFile, serverClient }) {
       fileCount: job.files.length,
       error: job.error,
       createdAt: job.createdAt,
+      extractStatus: job.extractStatus || null,
+      extractError: job.extractError || null,
     };
   }
 
@@ -321,6 +324,32 @@ function createTransferManager({ stateFile, serverClient }) {
         persist();
       }
       return true;
+    },
+
+    /** Extract archive files inside the job's downloaded folder. */
+    async extract(id) {
+      const job = jobs.get(id);
+      if (!job) throw new Error("Job not found");
+      if (job.extractStatus === "extracting") return publicState(job);
+
+      const dir = path.join(job.destDir, job.name);
+      job.extractStatus = "extracting";
+      job.extractError = null;
+      persist();
+
+      extractAll(dir).then((result) => {
+        job.extractStatus = result.failed > 0 && result.failed === result.total
+          ? "error"
+          : "done";
+        job.extractError = result.errors.length ? result.errors.join("; ") : null;
+        persist();
+      }).catch((err) => {
+        job.extractStatus = "error";
+        job.extractError = err.message;
+        persist();
+      });
+
+      return publicState(job);
     },
 
     /** Reload persisted jobs; anything that was mid-flight resumes. */

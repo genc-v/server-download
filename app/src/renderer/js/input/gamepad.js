@@ -74,7 +74,7 @@
       case "b": {
         const el = document.activeElement;
         if (el?.tagName === "INPUT") el.blur();
-        else document.querySelector("#nav button.active")?.focus();
+        else App.goBack?.();
         break;
       }
       case "lb":

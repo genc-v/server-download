@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("api", {
     resume: (id) => invoke("local:resume", id),
     cancel: (id) => invoke("local:cancel", id),
     remove: (id) => invoke("local:remove", id),
+    extract: (id) => invoke("local:extract", id),
   },
   rawg: {
     list: (params) => invoke("rawg:list", params),

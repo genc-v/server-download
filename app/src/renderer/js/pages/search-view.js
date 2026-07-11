@@ -4,93 +4,95 @@ App.pages.search = (() => {
   const { escapeHtml } = App.format;
 
   let lastQuery = "";
-  let page = 1;
-  let hasMore = false;
-  let loading = false;
 
-  function skeletons(n) {
-    return Array(n).fill('<div class="skeleton-card"></div>').join("");
-  }
-
-  async function run(query) {
+  async function search(query) {
     lastQuery = query;
-    page = 1;
-    hasMore = false;
     const el = document.getElementById("view-search");
     el.innerHTML = `<div class="page-pad">
-      <div class="search-label">Results for "${escapeHtml(query)}"</div>
+      <div class="search-label">${escapeHtml(query)}</div>
       <div class="search-sublabel">Searching…</div>
-      <div class="search-grid">${skeletons(12)}</div>
-      <div class="grid-status"></div>
     </div>`;
 
+    let results = [];
     try {
-      const data = await window.api.rawg.list({ search: query, page_size: 20, page: 1 });
-      if (lastQuery !== query) return; // stale response
-      const games = data?.results || [];
-      hasMore = !!data?.next;
-      const grid = el.querySelector(".search-grid");
-      const sub  = el.querySelector(".search-sublabel");
-      if (sub) sub.textContent = data?.count ? `${data.count.toLocaleString()} results` : `${games.length} results`;
-      if (grid) {
-        grid.innerHTML = games.length
-          ? games.map(App.gameCard).join("")
-          : `<div class="view-empty"><strong>No results</strong>"${escapeHtml(query)}" wasn't found.</div>`;
-      }
-      renderLoadMore(el);
+      results = await window.api.server.search(query);
     } catch (err) {
-      if (lastQuery !== query) return;
-      el.innerHTML = `<div class="page-pad"><p class="error-msg">${escapeHtml(err.message)}</p></div>`;
+      el.innerHTML = `<div class="page-pad">
+        <div class="search-label">${escapeHtml(query)}</div>
+        <div class="error-msg">${escapeHtml(err.message)}</div>
+      </div>`;
+      return;
     }
+
+    results = (results || []).filter((r) =>
+      r.uris?.some((u) => u.includes("gofile.io"))
+    );
+
+    if (!results.length) {
+      el.innerHTML = `<div class="page-pad">
+        <div class="search-label">${escapeHtml(query)}</div>
+        <div class="search-sublabel">No GoFile results found.</div>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `<div class="page-pad">
+      <div class="search-label">${escapeHtml(query)}</div>
+      <div class="search-sublabel">${results.length} result${results.length !== 1 ? "s" : ""}</div>
+      <div class="result-list" id="result-list">
+        ${results.map((r, i) => `
+          <div class="result-item" data-result-idx="${i}">
+            <div class="result-info">
+              <div class="result-name">${escapeHtml(r.title || r.name || "Unknown")}</div>
+              ${r.fileSize ? `<div class="result-size">${escapeHtml(r.fileSize)}</div>` : ""}
+            </div>
+            <button class="result-dl-btn" data-result-idx="${i}">↓ Download</button>
+          </div>`).join("")}
+      </div>
+    </div>`;
+
+    const listEl = document.getElementById("result-list");
+    listEl._results = results;
+    // auto-focus first download button so controller can immediately press A
+    setTimeout(() => listEl.querySelector(".result-dl-btn")?.focus(), 60);
   }
 
-  function renderLoadMore(el) {
-    const status = el.querySelector(".grid-status");
-    if (!status) return;
-    status.innerHTML = hasMore
-      ? '<button class="load-more-btn" id="search-load-more">Load more</button>'
-      : "";
-  }
+  async function handleClick(event) {
+    const btn = event.target.closest(".result-dl-btn");
+    if (!btn) return;
 
-  async function loadMore() {
-    if (loading || !hasMore) return;
-    loading = true;
-    const el  = document.getElementById("view-search");
-    const btn = document.getElementById("search-load-more");
-    if (btn) { btn.disabled = true; btn.textContent = "Loading…"; }
-    const query = lastQuery;
+    const idx = Number(btn.dataset.resultIdx);
+    const list = document.getElementById("result-list");
+    const results = list?._results;
+    if (!results?.[idx]) return;
+
+    const entry = results[idx];
+    btn.disabled = true;
+    btn.textContent = "Adding…";
+
     try {
-      const data = await window.api.rawg.list({ search: query, page_size: 20, page: page + 1 });
-      if (lastQuery !== query) return;
-      page += 1;
-      hasMore = !!data?.next;
-      const games = data?.results || [];
-      el.querySelector(".search-grid")
-        ?.insertAdjacentHTML("beforeend", games.map(App.gameCard).join(""));
-      renderLoadMore(el);
+      await window.api.server.add({ uris: entry.uris });
+      btn.textContent = "Added ✓";
+      btn.classList.add("result-dl-btn--done");
+      App.showView("downloads");
     } catch (err) {
-      if (btn) { btn.disabled = false; btn.textContent = "Load more"; }
-      const status = el.querySelector(".grid-status");
-      if (status) status.insertAdjacentHTML("beforeend", `<p class="error-msg">${escapeHtml(err.message)}</p>`);
-    } finally {
-      loading = false;
+      btn.disabled = false;
+      btn.textContent = "↓ Download";
+      const item = btn.closest(".result-item");
+      const errEl = document.createElement("div");
+      errEl.className = "error-msg";
+      errEl.textContent = err.message;
+      item?.appendChild(errEl);
     }
-  }
-
-  function handleClick(event) {
-    if (event.target.closest("#search-load-more")) { loadMore(); return; }
-    const gc = event.target.closest(".game-card");
-    if (gc) App.openCard(gc);
   }
 
   return {
     init() {
-      const el = document.getElementById("view-search");
-      el.addEventListener("click", handleClick);
-      el.addEventListener("mouseover", (e) => App.prefetchCard(e.target.closest(".game-card")));
+      document.getElementById("view-search").addEventListener("click", handleClick);
     },
-    search(query) {
-      run(query);
+    search,
+    show() {
+      if (lastQuery) search(lastQuery);
     },
   };
 })();

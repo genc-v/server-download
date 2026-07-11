@@ -109,6 +109,7 @@ function registerIpc({ settings, serverClient, transfers, cache }) {
   handle("local:resume", (id) => transfers.resume(id));
   handle("local:cancel", (id) => transfers.cancel(id));
   handle("local:remove", (id) => transfers.remove(id));
+  handle("local:extract", (id) => transfers.extract(id));
 
   /* cover art metadata */
   handle("meta:set", ({ name, coverUrl }) => {
