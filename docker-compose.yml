@@ -3,7 +3,11 @@ services:
     build: .
     ports:
       - "3939:3939"
+    environment:
+      - DOWNLOADS_DIR=/app/downloads
+      - STATE_PATH=/app/state.json
     volumes:
-      - ./data:/data
+      - ./downloads:/app/downloads
+      - ./state.json:/app/state.json
       - ./source.json:/app/source.json:ro
     restart: unless-stopped
