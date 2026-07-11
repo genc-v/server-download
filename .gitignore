@@ -10,6 +10,9 @@ state.json
 # electron build output
 app/out/
 app/dist/
+*.AppImage
+*.deb
+*.rpm
 
 # OS / editor noise
 .DS_Store

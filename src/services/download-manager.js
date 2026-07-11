@@ -12,6 +12,9 @@ import {
 
 const ACTIVE_STATUSES = ["queued", "resolving", "downloading", "retrying"];
 
+const EXTRACT_RETRY_DELAYS = [30_000, 60_000, 5 * 60_000, 15 * 60_000]; // 30s, 1m, 5m, 15m
+const MAX_EXTRACT_ATTEMPTS = EXTRACT_RETRY_DELAYS.length;
+
 class ByteCounter extends Transform {
   constructor(download) {
     super();
@@ -54,6 +57,8 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
         attempts: d.attempts,
         error: d.error,
         createdAt: d.createdAt,
+        extractAttempts: d.extractAttempts,
+        lastExtractAttempt: d.lastExtractAttempt,
       })),
       null,
       2
@@ -326,6 +331,9 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
       if (!d) return null;
       if (d.status !== "completed") return d;
       if (!extractor.isArchive(d.filename)) return d;
+      // Reset counters so periodic retry also resets on manual trigger
+      d.extractAttempts = 0;
+      d.lastExtractAttempt = null;
       extractor.extract(d);
       return d;
     },
@@ -362,6 +370,15 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
           downloads.set(d.id, d);
           console.log(`[restore] re-extracting ${d.filename}`);
           extractor.extract(d);
+        } else if (d.status === "completed" && extractor.isArchive(d.filename ?? "")) {
+          // Download finished but extraction never succeeded — retry immediately.
+          downloads.set(d.id, d);
+          if ((d.extractAttempts ?? 0) < MAX_EXTRACT_ATTEMPTS) {
+            d.extractAttempts = 0;
+            d.lastExtractAttempt = null;
+            console.log(`[restore] retrying extraction for ${d.filename}`);
+            extractor.extract(d);
+          }
         } else if (wasActive || failedWithAttemptsLeft) {
           // Interrupted by the crash/stop — pick it up again with a fresh
           // attempt budget, resuming from the partial file if one exists.
@@ -378,6 +395,24 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
         }
       }
       stateStore.markDirty();
+
+      // Start periodic extraction retry after state is loaded.
+      setInterval(() => {
+        const now = Date.now();
+        for (const d of downloads.values()) {
+          if (d.status !== "completed") continue;
+          if (!extractor.isArchive(d.filename ?? "")) continue;
+          const attempts = d.extractAttempts ?? 0;
+          if (attempts >= MAX_EXTRACT_ATTEMPTS) continue;
+          const delay = EXTRACT_RETRY_DELAYS[attempts] ?? EXTRACT_RETRY_DELAYS.at(-1);
+          const last = d.lastExtractAttempt ?? 0;
+          if (now - last < delay) continue;
+          d.extractAttempts = attempts + 1;
+          d.lastExtractAttempt = now;
+          console.log(`[extract retry ${d.extractAttempts}/${MAX_EXTRACT_ATTEMPTS}] ${d.filename}`);
+          extractor.extract(d);
+        }
+      }, 15_000);
     },
   };
 }

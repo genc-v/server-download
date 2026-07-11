@@ -285,6 +285,7 @@ function render(items) {
       );
     } else if (d.status === "completed") {
       metaParts.push(formatBytes(d.totalBytes || d.downloadedBytes));
+      if (d.canExtract) metaParts.push("extraction pending…");
     } else if (d.status === "extracting") {
       metaParts.push("unpacking archive…");
     } else if (d.status === "installed") {
@@ -312,7 +313,7 @@ function render(items) {
         '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
     } else if (d.status === "completed" && d.canExtract) {
       action =
-        '<button onclick="extractDownload(\'' + d.id + '\')">Extract</button> ' +
+        '<button onclick="extractDownload(\'' + d.id + '\')">Retry Extract</button> ' +
         '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
     } else {
       action = '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
