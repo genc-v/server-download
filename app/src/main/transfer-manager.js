@@ -5,7 +5,7 @@ const path = require("node:path");
 const { pipeline } = require("node:stream/promises");
 const { Readable, Transform } = require("node:stream");
 const { freeBytes } = require("./disk");
-const { extractAll } = require("./extract");
+const { extractAndClean, extractAll } = require("./extract");
 
 const ACTIVE_STATUSES = ["queued", "checking", "downloading", "retrying"];
 const MAX_CONSECUTIVE_FAILURES = 10;
@@ -228,6 +228,19 @@ function createTransferManager({ stateFile, serverClient }) {
       job.currentFile = null;
       job.error = null;
       job.bytesPerSecond = 0;
+      job.extractStatus = "extracting";
+      job.extractError = null;
+      persist();
+
+      try {
+        const dir = path.join(job.destDir, job.name);
+        const result = await extractAndClean(dir);
+        job.extractStatus = result.total === 0 ? null : (result.failed > 0 ? "error" : "done");
+        job.extractError  = result.errors.length ? result.errors.join("; ") : null;
+      } catch (err) {
+        job.extractStatus = "error";
+        job.extractError  = err.message;
+      }
       persist();
     } catch (error) {
       if (job.abortController.signal.aborted) {
@@ -337,7 +350,7 @@ function createTransferManager({ stateFile, serverClient }) {
       job.extractError = null;
       persist();
 
-      extractAll(dir).then((result) => {
+      extractAndClean(dir).then((result) => {
         job.extractStatus = result.failed > 0 && result.failed === result.total
           ? "error"
           : "done";

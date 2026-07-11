@@ -43,7 +43,7 @@ async function findArchives(dir) {
   return found;
 }
 
-function run(cmd, args, cwd) {
+function runCmd(cmd, args, cwd) {
   return new Promise((resolve, reject) => {
     const proc = spawn(cmd, args, { cwd, stdio: "pipe" });
     const errChunks = [];
@@ -70,7 +70,7 @@ async function tryCommands(attempts) {
   let last;
   for (const [cmd, args, cwd] of attempts) {
     try {
-      await run(cmd, args, cwd);
+      await runCmd(cmd, args, cwd);
       return;
     } catch (err) {
       last = err;
@@ -85,22 +85,22 @@ async function extractOne(archivePath) {
   const dest = path.dirname(archivePath);
 
   if (lower.endsWith(".zip")) {
-    return run("unzip", ["-o", archivePath, "-d", dest], dest);
+    return runCmd("unzip", ["-o", archivePath, "-d", dest], dest);
   }
   if (lower.endsWith(".tar.gz") || lower.endsWith(".tgz")) {
-    return run("tar", ["-xzf", archivePath, "-C", dest], dest);
+    return runCmd("tar", ["-xzf", archivePath, "-C", dest], dest);
   }
   if (lower.endsWith(".tar.bz2")) {
-    return run("tar", ["-xjf", archivePath, "-C", dest], dest);
+    return runCmd("tar", ["-xjf", archivePath, "-C", dest], dest);
   }
   if (lower.endsWith(".tar.xz")) {
-    return run("tar", ["-xJf", archivePath, "-C", dest], dest);
+    return runCmd("tar", ["-xJf", archivePath, "-C", dest], dest);
   }
   if (lower.endsWith(".tar.zst")) {
-    return run("tar", ["--zstd", "-xf", archivePath, "-C", dest], dest);
+    return runCmd("tar", ["--zstd", "-xf", archivePath, "-C", dest], dest);
   }
   if (lower.endsWith(".tar")) {
-    return run("tar", ["-xf", archivePath, "-C", dest], dest);
+    return runCmd("tar", ["-xf", archivePath, "-C", dest], dest);
   }
   if (lower.endsWith(".zst")) {
     return tryCommands([
@@ -108,7 +108,8 @@ async function extractOne(archivePath) {
     ]);
   }
   if (lower.endsWith(".gz")) {
-    return run("gunzip", ["-kf", archivePath], dest);
+    // -k keeps original; we remove it ourselves below
+    return runCmd("gunzip", ["-kf", archivePath], dest);
   }
   if (lower.endsWith(".7z")) {
     return tryCommands([
@@ -126,6 +127,38 @@ async function extractOne(archivePath) {
   throw new Error(`Unsupported format: ${path.basename(archivePath)}`);
 }
 
+/**
+ * Find every archive in `dir`, extract each one next to itself,
+ * then delete the archive file. Skips files that fail to extract
+ * unless ALL of them fail (in which case throws).
+ *
+ * Returns { total, failed, errors }.
+ */
+async function extractAndClean(dir) {
+  const archives = await findArchives(dir);
+  if (!archives.length) return { total: 0, failed: 0, errors: [] };
+
+  const errors = [];
+  for (const archive of archives) {
+    try {
+      await extractOne(archive);
+      await fsp.rm(archive, { force: true });
+    } catch (err) {
+      errors.push(`${path.basename(archive)}: ${err.message}`);
+    }
+  }
+
+  if (errors.length === archives.length && archives.length > 0) {
+    throw new Error(errors.join("; "));
+  }
+
+  return { total: archives.length, failed: errors.length, errors };
+}
+
+/**
+ * Same as extractAndClean but keeps the original archives.
+ * Used by the manual Extract button in the UI.
+ */
 async function extractAll(dir) {
   const archives = await findArchives(dir);
   if (!archives.length) {
@@ -145,4 +178,4 @@ async function extractAll(dir) {
   return { total: archives.length, failed: errors.length, errors };
 }
 
-module.exports = { extractAll, findArchives, isArchive };
+module.exports = { extractAndClean, extractAll, findArchives, isArchive };
