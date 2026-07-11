@@ -40,9 +40,7 @@
       App.pages[name]?.show?.();
       return;
     }
-    if (current.kind === "view" && current.name === "downloads") {
-      App.pages.downloads?.hide?.();
-    }
+    App.pages[current.name]?.hide?.();
     if (opts.push !== false) pushCurrent();
     current = { kind: "view", name };
     setView(name);
@@ -58,9 +56,7 @@
   App.goBack = () => {
     const prev = backStack.pop();
     if (!prev) return;
-    if (current.kind === "view" && current.name === "downloads") {
-      App.pages.downloads?.hide?.();
-    }
+    App.pages[current.name]?.hide?.();
     current = prev;
     setView(prev.name);
     App.pages[prev.name]?.show?.();
