@@ -1,11 +1,8 @@
 FROM node:20-slim
 
-# Add non-free repo as a separate .list file — works regardless of whether
-# the base image uses DEB822 format or the old sources.list format.
-RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free non-free-firmware" \
-      > /etc/apt/sources.list.d/non-free.list && \
-    echo "deb http://deb.debian.org/debian-security bookworm-security contrib non-free non-free-firmware" \
-      >> /etc/apt/sources.list.d/non-free.list
+# Append non-free to every Components line in the DEB822 sources file.
+RUN sed -i '/^Components:/ s/$/ contrib non-free non-free-firmware/' \
+      /etc/apt/sources.list.d/debian.sources
 
 # Install extraction tools:
 #   unrar            → real unrar (non-free): handles all RAR3/RAR4/RAR5 methods
