@@ -310,6 +310,10 @@ function render(items) {
       action =
         '<button onclick="retryDownload(\'' + d.id + '\')">Retry</button> ' +
         '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
+    } else if (d.status === "completed" && d.canExtract) {
+      action =
+        '<button onclick="extractDownload(\'' + d.id + '\')">Extract</button> ' +
+        '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
     } else {
       action = '<button onclick="removeDownload(\'' + d.id + '\')">Remove</button>';
     }
@@ -356,6 +360,11 @@ async function cancelDownload(id) {
 
 async function retryDownload(id) {
   await fetch("/api/downloads/" + id + "/retry", { method: "POST" });
+  refresh();
+}
+
+async function extractDownload(id) {
+  await fetch("/api/downloads/" + id + "/extract", { method: "POST" });
   refresh();
 }
 

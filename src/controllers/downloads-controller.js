@@ -39,6 +39,7 @@ export function createDownloadsController({ manager }) {
     resume: action("resume"),
     cancel: action("cancel"),
     retry: action("retry"),
+    extract: action("extract"),
 
     remove(req, res, { params }) {
       manager.remove(params[0]);

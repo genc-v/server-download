@@ -27,8 +27,9 @@ async function extractCommand(filePath, destDir, password) {
 
   // For RAR files prefer unrar — it handles all RAR3/RAR4/RAR5 methods.
   // 7z (p7zip) has incomplete RAR support and fails on some compression methods.
+  // -kb keeps broken files so a corrupt/incomplete archive still extracts what it can.
   if (isRar && (await hasTool("unrar"))) {
-    const args = ["x", "-y", password ? `-p${password}` : "-p-"];
+    const args = ["x", "-y", "-kb", password ? `-p${password}` : "-p-"];
     return ["unrar", [...args, filePath, `${destDir}/`]];
   }
 
@@ -81,7 +82,14 @@ export function createExtractor({ downloadsDir, markDirty }) {
 
         await fsp.mkdir(destDir, { recursive: true });
         console.log(`[extract] ${d.filename} → ${destDir} using ${command[0]}`);
-        await execFileAsync(command[0], command[1], EXEC_OPTS);
+        await execFileAsync(command[0], command[1], EXEC_OPTS).catch((err) => {
+          // unrar exit 1 = warning, exit 3 = CRC error on some files.
+          // Both still extract successfully; only re-throw on hard failures.
+          const isUnrar = command[0] === "unrar";
+          const softCode = isUnrar && (err.code === 1 || err.code === 3);
+          if (!softCode) throw err;
+          console.warn(`[extract] ${d.filename}: partial extraction (exit ${err.code}) — some files may be corrupt`);
+        });
 
         // Archive unpacked fine — the original file is no longer needed.
         await fsp.rm(d.filePath, { force: true });

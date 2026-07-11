@@ -14,6 +14,7 @@ export function createRouter({ controllers }) {
   router.post(/^\/api\/downloads\/([\w-]+)\/resume$/, downloads.resume);
   router.post(/^\/api\/downloads\/([\w-]+)\/cancel$/, downloads.cancel);
   router.post(/^\/api\/downloads\/([\w-]+)\/retry$/, downloads.retry);
+  router.post(/^\/api\/downloads\/([\w-]+)\/extract$/, downloads.extract);
   router.delete(/^\/api\/downloads\/([\w-]+)$/, downloads.remove);
 
   router.get(/^\/api\/library$/, library.list);

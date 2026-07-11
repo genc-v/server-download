@@ -74,6 +74,7 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
       maxAttempts: config.maxAttempts,
       error: d.error,
       createdAt: d.createdAt,
+      canExtract: extractor.isArchive(d.filename),
     };
   }
 
@@ -317,6 +318,15 @@ export function createDownloadManager({ config, stateStore, extractor, hosters }
         stateStore.markDirty();
         runDownload(d);
       }
+      return d;
+    },
+
+    extract(id) {
+      const d = downloads.get(id);
+      if (!d) return null;
+      if (d.status !== "completed") return d;
+      if (!extractor.isArchive(d.filename)) return d;
+      extractor.extract(d);
       return d;
     },
 
