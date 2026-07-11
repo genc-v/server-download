@@ -1,21 +1,25 @@
 FROM node:20-slim
 
-# Enable non-free repo for the real unrar (full RAR3+RAR5 support)
-RUN sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/' \
-      /etc/apt/sources.list.d/debian.sources
+# Add non-free repo as a separate .list file — works regardless of whether
+# the base image uses DEB822 format or the old sources.list format.
+RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free non-free-firmware" \
+      > /etc/apt/sources.list.d/non-free.list && \
+    echo "deb http://deb.debian.org/debian-security bookworm-security contrib non-free non-free-firmware" \
+      >> /etc/apt/sources.list.d/non-free.list
 
 # Install extraction tools:
-#   unrar            → best RAR support (non-free, handles all methods)
-#   p7zip-full       → 7z (zip, 7z, tar.*, fallback for rar)
+#   unrar            → real unrar (non-free): handles all RAR3/RAR4/RAR5 methods
+#   p7zip-full       → 7z: zip, 7z, tar.* and fallback for rar
 #   unzip            → zip fallback
-#   libarchive-tools → bsdtar (universal fallback)
+#   libarchive-tools → bsdtar: universal fallback
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       unrar \
       p7zip-full \
       unzip \
       libarchive-tools \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && which unrar && unrar --version | head -1
 
 WORKDIR /app
 
@@ -23,9 +27,6 @@ COPY package.json ./
 COPY server.js    ./
 COPY src/         ./src/
 COPY public/      ./public/
-
-# source.json is the game catalogue — mount it as a volume if you want
-# to swap it without rebuilding; copy it here as a default.
 COPY source.json  ./
 
 ENV PORT=3939

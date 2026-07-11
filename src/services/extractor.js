@@ -23,6 +23,14 @@ async function hasTool(name) {
 
 async function extractCommand(filePath, destDir, password) {
   const lower = filePath.toLowerCase();
+  const isRar = lower.endsWith(".rar");
+
+  // For RAR files prefer unrar — it handles all RAR3/RAR4/RAR5 methods.
+  // 7z (p7zip) has incomplete RAR support and fails on some compression methods.
+  if (isRar && (await hasTool("unrar"))) {
+    const args = ["x", "-y", password ? `-p${password}` : "-p-"];
+    return ["unrar", [...args, filePath, `${destDir}/`]];
+  }
 
   for (const sevenZip of ["7zz", "7z"]) {
     if (await hasTool(sevenZip)) {
@@ -30,11 +38,6 @@ async function extractCommand(filePath, destDir, password) {
       if (password) args.push(`-p${password}`);
       return [sevenZip, [...args, filePath]];
     }
-  }
-
-  if (lower.endsWith(".rar") && (await hasTool("unrar"))) {
-    const args = ["x", "-y", password ? `-p${password}` : "-p-"];
-    return ["unrar", [...args, filePath, `${destDir}/`]];
   }
 
   if (lower.endsWith(".zip") && (await hasTool("unzip"))) {
@@ -49,7 +52,7 @@ async function extractCommand(filePath, destDir, password) {
     if (password) args.unshift("--passphrase", password);
     return ["bsdtar", args];
   }
-  if (!lower.endsWith(".rar") && !lower.endsWith(".7z") && (await hasTool("tar"))) {
+  if (!isRar && !lower.endsWith(".7z") && (await hasTool("tar"))) {
     return ["tar", ["-xf", filePath, "-C", destDir]];
   }
 
@@ -77,7 +80,7 @@ export function createExtractor({ downloadsDir, markDirty }) {
         }
 
         await fsp.mkdir(destDir, { recursive: true });
-        console.log(`[extract] ${d.filename} -> ${destDir} (${command[0]})`);
+        console.log(`[extract] ${d.filename} → ${destDir} using ${command[0]}`);
         await execFileAsync(command[0], command[1], EXEC_OPTS);
 
         // Archive unpacked fine — the original file is no longer needed.
