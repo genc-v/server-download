@@ -1,14 +1,18 @@
 FROM node:20-slim
 
+# Enable non-free repo for the real unrar (full RAR3+RAR5 support)
+RUN sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/' \
+      /etc/apt/sources.list.d/debian.sources
+
 # Install extraction tools:
-#   p7zip-full       → 7z (handles zip, 7z, rar incl. RAR5, tar.*)
-#   unrar-free       → additional rar fallback (main repo)
-#   unzip            → fallback for zip
+#   unrar            → best RAR support (non-free, handles all methods)
+#   p7zip-full       → 7z (zip, 7z, tar.*, fallback for rar)
+#   unzip            → zip fallback
 #   libarchive-tools → bsdtar (universal fallback)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+      unrar \
       p7zip-full \
-      unrar-free \
       unzip \
       libarchive-tools \
     && rm -rf /var/lib/apt/lists/*
