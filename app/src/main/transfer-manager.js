@@ -5,7 +5,7 @@ const path = require("node:path");
 const { pipeline } = require("node:stream/promises");
 const { Readable, Transform } = require("node:stream");
 const { freeBytes } = require("./disk");
-const { extractAndClean, extractAll } = require("./extract");
+const { extractAndClean } = require("./extract");
 
 const ACTIVE_STATUSES = ["queued", "checking", "downloading", "retrying"];
 const MAX_CONSECUTIVE_FAILURES = 10;

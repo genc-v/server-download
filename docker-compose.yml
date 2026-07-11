@@ -1,0 +1,9 @@
+services:
+  server-downloader:
+    build: .
+    ports:
+      - "3939:3939"
+    volumes:
+      - ./data:/data
+      - ./source.json:/app/source.json:ro
+    restart: unless-stopped

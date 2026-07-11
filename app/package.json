@@ -5,10 +5,23 @@
   "description": "Desktop client for server-downloader: search, queue on the server, fetch locally with pause/resume.",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build:linux": "electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "com.gamelibrary.app",
+    "productName": "Game Library",
+    "files": [
+      "src/**/*"
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Game"
+    }
   },
   "devDependencies": {
     "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
     "playwright-core": "^1.61.1"
   }
 }

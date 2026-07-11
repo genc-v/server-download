@@ -67,17 +67,18 @@ function runCmd(cmd, args, cwd) {
 }
 
 async function tryCommands(attempts) {
-  let last;
   for (const [cmd, args, cwd] of attempts) {
     try {
       await runCmd(cmd, args, cwd);
       return;
     } catch (err) {
-      last = err;
+      // Only keep trying if this command simply isn't installed
       if (!err.message.includes("not found")) throw err;
     }
   }
-  throw last;
+  // All candidates missing — give a clear message listing what to install
+  const cmds = [...new Set(attempts.map(([c]) => c))].join(", ");
+  throw new Error(`None of the required tools are installed (${cmds}). Install one to extract this format.`);
 }
 
 async function extractOne(archivePath) {
@@ -122,6 +123,9 @@ async function extractOne(archivePath) {
     return tryCommands([
       ["unrar", ["x", "-o+", archivePath, dest + "/"], dest],
       ["rar",   ["x", "-o+", archivePath, dest + "/"], dest],
+      ["7z",    ["x", archivePath, `-o${dest}`, "-y"], dest],
+      ["7za",   ["x", archivePath, `-o${dest}`, "-y"], dest],
+      ["7zz",   ["x", archivePath, `-o${dest}`, "-y"], dest],
     ]);
   }
   throw new Error(`Unsupported format: ${path.basename(archivePath)}`);
